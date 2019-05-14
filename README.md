@@ -1,1 +1,3 @@
-# gem_2019
+# GEM 2019 
+
+Repository for tutorial, notes, and Jupyter notebooks.
