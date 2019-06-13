@@ -1,8 +1,7 @@
 # GEM 2019 
+Repository for tutorial, notes, and Jupyter notebooks. Primarily a resource developed for the 2019 NSF-funded Geospace Environment Modeling (GEM) workshop.
 
-Repository for tutorial, notes, and Jupyter notebooks.
-
-# Instally Python
+# Installing Python
 A brief description of installing Python on Windows, Mac, and Linux can be found [here][1].
 
 # Jupyter Notebook
