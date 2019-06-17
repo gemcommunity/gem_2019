@@ -29,38 +29,11 @@ conda install -c anaconda anaconda
 
 If you're not running WSL then installing Anaconda is easiest through the [graphic installer][6]. Simply download the appropriate install and follow the directions. This installs the full version of Anaconda as opposed to lighter Miniconda.
 
-### Conda
-[Conda][7] is the package management system and environment management system for Anaconda. It allows you to run updates and install new packages while keeping track of dependencies so that everything continues to work. It also allows you to create additional Python environments. These environments are isolated copies of Anaconda/Python that allow you to work with specific versions of Python and packages without affecting your base installation.
+## Installing Packages
 
-To install new packages with conda simply:
+Python packages can be installed via the package managers Conda or PIP. An brief description of these package managers, core Python packages, and Heliophysics specefic packages can be found [here][12].
 
-```
-conda install scikit-learn
-```
 
-or specific versions
-
-```
-conda install scikit-learn=0.20.3
-```
-
-or to update:
-
-```
-conda update scikit-learn
-```
-
-You can find more on package management [here][8] and Python environments [here][9].
-
-### PIP
-
-PIP is another Python package manager. If you are trying to install a package, maybe [IGRF][10], which may not be avialable via Anaconda then you can try installing the package via PIP and the [Python Package Index (PyPI)][11] (a host for software developed and shared by the Python community).
-
-To install packages via pip simply use:
-
-```
-pip install package_name
-```
 
 
 [1]:https://github.blog/2018-11-15-state-of-the-octoverse-top-programming-languages/
