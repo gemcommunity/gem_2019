@@ -47,3 +47,4 @@ Python packages can be installed via the package managers Conda or PIP. An brief
 [9]:https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#
 [10]:https://pypi.org/project/igrf12/
 [11]:https://pypi.org/
+[12]:https://github.com/kylermurphy/gem_2019/blob/master/PackageInstall.md
