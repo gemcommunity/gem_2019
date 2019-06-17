@@ -31,7 +31,7 @@ If you're not running WSL then installing Anaconda is easiest through the [graph
 
 ## Installing Packages
 
-Python packages can be installed via the package managers Conda or PIP. An brief description of these package managers, core Python packages, and Heliophysics specefic packages can be found [here][12].
+Python packages can be installed via the package managers Conda or PIP. An brief description of these package managers, core Python packages, and Heliophysics specefic packages can be found [here][7].
 
 
 
@@ -42,9 +42,4 @@ Python packages can be installed via the package managers Conda or PIP. An brief
 [4]:https://www.anaconda.com/
 [5]:https://repo.continuum.io/
 [6]:https://www.anaconda.com/distribution/
-[7]:https://docs.conda.io/en/latest/
-[8]:https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html
-[9]:https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#
-[10]:https://pypi.org/project/igrf12/
-[11]:https://pypi.org/
-[12]:https://github.com/kylermurphy/gem_2019/blob/master/PackageInstall.md
+[7]:https://github.com/kylermurphy/gem_2019/blob/master/PackageInstall.md
