@@ -26,4 +26,4 @@ A quick tutorial can be found [here][3].
 [1]:/PythonInstall.md
 [2]:https://jupyter.org/
 [3]:https://medium.com/codingthesmartway-com-blog/getting-started-with-jupyter-notebook-for-python-4e7082bd5d46
-[4]:/PackageInstall.md.md
+[4]:/PackageInstall.md

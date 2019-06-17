@@ -42,4 +42,4 @@ Python packages can be installed via the package managers Conda or PIP. An brief
 [4]:https://www.anaconda.com/
 [5]:https://repo.continuum.io/
 [6]:https://www.anaconda.com/distribution/
-[7]:https://github.com/kylermurphy/gem_2019/blob/master/PackageInstall.md
+[7]:/PackageInstall.md
