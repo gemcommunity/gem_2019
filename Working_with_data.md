@@ -332,6 +332,8 @@ with scio.netcdf.netcdf_file(ampfn) as ampdata:
 
 For convenience, SpacePy's datamodel also provides a one-line read from NetCDF3 into SpacePy's data model.
 
+_NOTE_: The main reason you might not want to use these convenience methods is for very large files. If your file won't fit into memory, the convenience of the "_suck all of the data into memory_" approach will obviously fail. Then you'll have to fall back to the more manual methods above.
+
 ```python
 ampdata_easy = dm.fromNC3(ampfn)
 
@@ -348,6 +350,36 @@ print(ampdata_easy['nlon'].attrs)
 HDF5 is the current generation of the Heirarchical Data Format. It's been around since about 2002, and it's broadly used across the sciences. HDF5 has great parallel support and is widely adopted across high-performance comupting.
 
 So why are NetCDF4 and Matlab save files listed here? Well, NetCDF4 is built on top of HDF5. Since version 7 of Matlab, the default save format (the `.mat` saveset) has used HDF5 under the hood. So, unless the files are using either specific features not supported by Python interfaces to the HDF5 library, then reading NetCDF4 and `.mat` files is as easy as reading HDF5.
+
+The two major libraries that provide HDF5 support are `h5py` and `pytables`. `spacepy` provides convenience routines to read/write in one line through its `datamodel` module. As before, files that won't fit in memory shouldn't try to use the convenience routines.
+
+```python
+
+```
+
+## NASA CDF
+
+And finally, NASA's Common Data Format (CDF). This really hasn't seen much use outside of heliophysics, so tools aimed at a broader community (like `scipy`) don't provide access to CDF.
+
+The Python tools that do are (in order of appearance):
+1. spacepy
+  - Originally released in 2009, this library has had full CDF support (read, write, etc.) since around 2010. It provides a robust interface to the NASA CDF library.
+    - Benefit: When the CDF library updates, as it does regularly, you just install the new one and SpacePy will use it. No waiting for the developers!
+    - Benefit: Provides full, robust, well-tested CDF library access.
+    - Drawback: You have to install a C library (but NASA's instructions are pretty good).
+2. pysatCDF
+  - pysatCDF was designed to provide a lightweight, easy-to-install, CDF reader. It was primarily aimed at users of pysat (largely the CEDAR community). The "easy-to-install" part comes from the fact that the CDF library is bundled with it.
+    - Benefit: CDF is included, and `pysatCDF` will try to build it for you.
+    - Benefit: Syntax for use is modeled on `spacepy`, so the two are fairly interoperable.
+    - Drawback: If you need a new version of CDF you have to wait for `pysatCDF` to be updated, then reinstall that.
+    - Drawback: Only has read capability, no write capability.
+3. cdflib
+  - Originally (I believe) written for MAVEN, this is a pure Python version of the CDF library. It's only been around for a couple of years.
+    - Benefit: It's just Python. No need to worry about compiling C code, or having someone else compile it. It's just Python.
+    - Drawback: Any changes to how CDF works under-the-hood will nned to be implemented in `cdflib` after CDF updates the C library.
+    - Drawback: Can only write v3 CDFs
+
+For the sake of interoperability I'll focus on using SpacePy. Reading using `pysatCDF` should work just about the same way as using the `spacepy.pycdf` module. `cdflib` has different syntax.
 
 ```python
 
