@@ -37,7 +37,7 @@ Here's what the notebook will cover. In the session at GEM we'll scroll through 
 - NASA CDF
 
 ## Prepping for the session
-Assuming we have a good internet conenction, you don't need to do any prep. *_BUT_*, we all know how conference wifi works out. So if you want to grab the data in advance, just skip down to the "Getting files" section and make sure you have all the data files. Nothing there is big, so it should all be fairly quick to retrieve.
+Assuming we have a good internet conenction, you don't need to do any prep. *_BUT_*, we all know how conference wifi works out. So *if you want to grab the data in advance, just skip down to the "Getting files" section* and make sure you have all the data files. Nothing there is big, so it should all be fairly quick to retrieve.
 
 <!-- #region -->
 ## Data, metadata, and data models
@@ -112,6 +112,7 @@ import numpy as np
 import scipy.io as scio
 from matplotlib import pyplot as plt
 #everything else
+import spacepy.toolbox as tb
 from spacepy import pycdf
 import spacepy.datamodel as dm
 import spacepy.plot as splot
@@ -128,6 +129,7 @@ mydatapath = 'data'
 ## Getting files
 
 If you have grabbed these data files in advance, great! If not, let's get them now...
+This is partly because we need files to demonstrate how to work with files, and partly as a basic reference for how to fetch files from the internet. It's fairly straightforward to start doing this programmatically in a workflow.
 
 First, we'll grab a NASA CDF file with THEMIS data from the NASA Space Physics Data Facility. There are sveral ways to do this, but we'll use a basic, generic FTP transfer. Since we already know eaxctly what the file is, and where it is, this method works just fine.
 
@@ -148,7 +150,7 @@ if not os.path.isfile(localfname):
     ftp.quit()
 ```
 
-Now let's grab an IDL save set. This is from the Global UltraViolet Imager (GUVI) on the TIMED satellite. For this we'll need to use Python's basic web handling.
+Now let's grab an IDL save set. I've made a simple file that contains two variables for the pruposes of demonstrating this. Unless you downloaded or cloned the whole repository, then we'll have to grab it from the web. For this we'll need to use Python's basic web handling.
 
 ```python
 guvifn = os.path.join(mydatapath, 'guvi_aurora_2003_197')
@@ -175,46 +177,170 @@ amp_url = 'https://github.com/gemcommunity/gem_2019/blob/master/data/{0}'.format
 
 req = urllib.request.Request(amp_url)
 #do proxy stuff if required
-if not os.path.isfile(ampfile):
+if not os.path.isfile(ampfn):
     #retrieve from github
     with urllib.request.urlopen(req) as response, open(guvifn, 'wb') as outfile:
-    adata = response.read()
-    outfile.write(adata)
+        adata = response.read()
+        outfile.write(adata)
 ```
 
 ## Working with text
 
 We'll start with regular ASCII, or *_delimiter separated values_*. You've heard of CSV? That's _comma separated values_. If you use whitespace or tabs, for example, then you have DSV. Since this notebook should act as a reference, we'll do several methods. If you're in the room at GEM, we'll just use `numpy` to load the text file.
 
-```python
+<!-- #region -->
+The file, rather awkwardly, has both ':' and '#' a to mark header lines.
+```
+:Data_list: Gp_part_5m.txt
+:Created: 2019 Jun 17 1816 UTC
+# Prepared by the U.S. Dept. of Commerce, NOAA, Space Weather Prediction Center
+...
+#                 Modified Seconds
+# UTC Date  Time   Julian  of the
+# YR MO DA  HHMM    Day     Day     P > 1     P > 5     P >10     P >30     P >50     P>100     E>0.8     E>2.0     E>4.0
+#-------------------------------------------------------------------------------------------------------------------------
+2019 06 17  1615   58651  58500   3.71e+00  3.19e-01  2.78e-01  1.84e-01  1.28e-01  9.04e-02  1.67e+04  6.65e+01 -1.00e+05
+```
+First, we'll do this a native-Python way, and put our results into a structure that mimics the data model described at the top of the notebook.
+<!-- #endregion -->
 
+### Method 1: Plain "hand-rolled" Python
+
+```python
+with open('data/goes-particle-flux-primary.txt') as fh:
+    # this will read EVERYTHING from the file
+    #each row willbe a string
+    tempdata = fh.readlines()
+tempdata = [line.strip() for line in tempdata]
+#strip() #removes line breaks, trailing blanks, etc.
+
+gheader = [line for line in tempdata if line[0] in [':', '#']]
+print('Header (start and end only):\n\n{0}\n{1}'.format(gheader[0], gheader[1]))
+print('...\n{0}\n{1}\n{2}'.format(gheader[-3], gheader[-2], gheader[-1]))
+
+gbody = [line.split() for line in tempdata if line[0] not in [':', '#']] #breaks each line into parts, splitting on whitespace
+gbody = np.asarray(gbody)
+
+#now let's make a dictionary so we can access by variable name, then we'll put arrays inside it...
+goesdata = dict()
+goesdata['year'] = gbody[:, 0].astype(int)
+goesdata['month'] = gbody[:, 1].astype(int)
+goesdata['day'] = gbody[:, 2].astype(int)
+goesdata['seconds_of_day'] = gbody[:, 5]
+goesdata['flux_p'] = gbody[:, 6:12]
+goesdata['flux_e'] = gbody[:, 12:]
 ```
 
-IDL has a long history in space physics, and the convenience of dumping the variables in an environement to a file has led to data being distributed in IDL's "save set" format. 
+```python
+tb.dictree(goesdata, verbose=True)
+```
+
+### Method 2: Using numpy's loadtxt
+
+```python
+#We'll use numpy's loadtxt function to read the data and ignore the header.
+goesdata_np = np.loadtxt('data/goes-particle-flux-primary.txt', comments=['#',':'])
+
+#now inspect the shape of the data, so we know what array dimensions we are working with
+print('The GOES data has dimensions {0}'.format(goesdata.shape))
+
+#and we'll inspect the first line, which should be 15 elements long
+print('Values in first row:\n {0}'.format(goesdata[0]))
+```
+
+So we can either access the array directly whenever we want to use it, or copy the code from above to put it into a dictionary. Or, ...
+
+### Method 3: loadtxt, with a record array
+
+we can specify the data types in advance, and numpy will give us a "record array" that we can access by name. This time we'll just keep the columns we want.
+
+```python
+cols = (0, 1, 2, 5, 12, 13, 14) #time info and electron flux data
+names = ('year', 'month', 'day', 'seconds_of_day', 'flux_e1', 'flux_e2', 'flux_e3')
+datatypes = (np.int, np.int, np.int, np.float, np.float, np.float, np.float)
+goesdata_np = np.loadtxt('data/goes-particle-flux-primary.txt', comments=['#',':'],
+                         usecols=cols, dtype={'names': names, 'formats': datatypes})
+```
+
+```python
+print('Values in first row:\n {0} {1} {2} {3} {4} {5} {6}'.format(*[goesdata_np[nn][0] for nn in names]))
+```
+
+We can also use SpacePy to convert a record array to a dictionary-like construction. We'll overwrite the old one, just for the convenience of having the same name.
+
+```python
+goesdata = dm.fromRecArray(goesdata_np)
+
+print(type(goesdata))
+goesdata.tree(verbose=True)
+```
+
+This is basically the same as the _hand-rolled_ version above, but now the dictionary-like container carries metadata, as do the arrays. By default, these are empty, but we'll come back to this later.
+
+```python
+print('Glabal metadata (should be empty here): {0}'.format(goesdata.attrs))
+print('Metadata on "day" (should be empty here): {0}'.format(goesdata['day'].attrs))
+```
 
 ## Legacy IDL save sets
 
+IDL has a long history in space physics, and the convenience of dumping the variables in an environment to a file has led to data being distributed in IDL's "save set" format. 
+
 Thankfully, you don't need IDL to use an IDL save set any more! `scipy` is a core part of the scientific Python ecosystem, and it has had support for reading IDL save sets for a fairly long time.
 
+_NOTE_: Some IDL data types aren't supported, in my experience. Null pointers, for example. That means that occasionally you'll find an IDL saveset you just can't read with `scipy`. Unfortunately the way around that is to get access to a licensed copy, read the saveset in, then write it back out as a different file type.
+
 ```python
-guvi = scio.readsav(guvifn)
+idldata = scio.readsav('data/test_idlsav.sav')
+print(idldata)
+print()
+tb.dictree(idldata)
 ```
 
-There are a lot of different binary formats used for data. Thankfully, the days of proprietary binary data requiring a minimally-documented code from the instrument team (that probably won't compile on your system) are just about over.
+<!-- #region -->
+You can see that `readsav` generates a dictionary containing arrays for each named variable.
+
 
 ## Working with NetCDF3
 
-NetCDF is widely used in Earth and atmospheric sciences, and a lot of Earth-observing data uses it. It's been superseded by NetCDF4, so we'll just see where the tools are and move on.
+There are a lot of different binary formats used for data. Thankfully, the days of proprietary binary data requiring a minimally-documented code from the instrument team (that probably won't compile on your system) are just about over. Similarly, the days of needing a specific commercial software package just to read a file are pretty much over. The free self-describing file formats are more widely supported, and better in almost every way, than the proprietary formats these days.
+
+NetCDF is widely used in Earth and atmospheric sciences, and a lot of Earth-observing data uses it. NetCDF3 is a legacy version that has been superseded by NetCDF4, so we'll just see where the tools are and move on. Again, `scipy` provides the ability to work with NetCDF files:
+<!-- #endregion -->
 
 ```python
-ampdata = dm.fromNC3(ampfile)
-ampdata.tree(verbose=True, attrs=True)
+with scio.netcdf.netcdf_file(ampfn) as ampdata:
+    print('Opening the file gives us a file-like object: {0}'.format(ampdata))
+    print("\nLet's look at what's in it... (just the first 7 variables)")
+    print([var for idx, var in enumerate(ampdata.variables) if idx<=6])
+    #to access the data we have to copy it from the file to a variable
+    ampdata_copy = dict()
+    ampdata_copy['nlon'] = ampdata.variables['nlon'][:].copy()
+
+print('\nAnd now we can inspect the data we just read in.\n')
+tb.dictree(ampdata_copy, verbose=True)
+print("\nampdata_copy['nlon'] = {0}".format(ampdata_copy['nlon']))
 ```
 
-
+Since we've extolled the virtues of having metadata, let's access the metadata on 'nlon'. The `with` block above closes the file on exit, so we're going to have to open it again...
+I'll just print it here.
 
 ```python
-ampdata['colat'][:,-1]
+with scio.netcdf.netcdf_file(ampfn) as ampdata:
+    print(ampdata.variables['nlon'].description)
+```
+
+For convenience, SpacePy's datamodel also provides a one-line read from NetCDF3 into SpacePy's data model.
+
+```python
+ampdata_easy = dm.fromNC3(ampfn)
+
+print("\nampdata_easy['nlon'] = {0}".format(ampdata_easy['nlon']))
+```
+And now all the metadata comes along for the ride, so we can inspect it by just looking at the `attrs` attribute.
+
+```python
+print(ampdata_easy['nlon'].attrs)
 ```
 
 ## HDF5, NetCDF4, and Matlab save files
