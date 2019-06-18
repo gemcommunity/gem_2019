@@ -365,7 +365,7 @@ The Python tools that do are (in order of appearance):
 1. spacepy
   - Originally released in 2009, this library has had full CDF support (read, write, etc.) since around 2010. It provides a robust interface to the NASA CDF library.
     - Benefit: When the CDF library updates, as it does regularly, you just install the new one and SpacePy will use it. No waiting for the developers!
-    - Benefit: Provides full, robust, well-tested CDF library access.
+    - Benefit: Provides full, robust, well-tested CDF library access. Read and write, supports backwards-compatible versions.
     - Drawback: You have to install a C library (but NASA's instructions are pretty good).
 2. pysatCDF
   - pysatCDF was designed to provide a lightweight, easy-to-install, CDF reader. It was primarily aimed at users of pysat (largely the CEDAR community). The "easy-to-install" part comes from the fact that the CDF library is bundled with it.
