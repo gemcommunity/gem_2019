@@ -1,8 +1,8 @@
 ## Python Packages
 
-Packages are Python's way of _packaging_ and _distributing_ code for reuse. This includes, for example, packages designed for plotting in Python, working with and manipulating arrays, or dowloading and opening data files. In Python packages can be installed via a package manager such as Conda, Anaconda's built in package manager, or PIP. 
+Packages are Python's way of _packaging_ and _distributing_ code for reuse. This includes, for example, packages designed for plotting in Python, working with and manipulating arrays, or downloading and opening data files. In Python packages can be installed via a package manager such as Conda, Anaconda's built in package manager, or PIP. 
 
-If you're using Python for data analysis, or to follow along in the GEM tutorials, then their are a number of basic packages which you should make sure you have installed. These include:
+If you're using Python for data analysis, or to follow along in the GEM tutorials, then there are a number of basic packages which you should make sure you have installed. These include:
 
 - [Numpy][6], a fundemental package for scientific computing (e.g., arrays)
 - [SciPy][7], package for mathematics, science, and engineering (e.g., FFTs)
@@ -49,7 +49,7 @@ You can find more on package management [here][2] and Python environments [here]
 
 ### PIP
 
-PIP is another Python package manager. If you are trying to install a package, maybe [IGRF][4], which may not be avialable via Anaconda then you can try installing the package via PIP and the [Python Package Index (PyPI)][5] (a host for software developed and shared by the Python community).
+Pip is another Python package manager. If you are trying to install a package, maybe [IGRF][4], which may not be available via Anaconda then you can try installing the package via pip and the [Python Package Index (PyPI)][5] (a host for software developed and shared by the Python community).
 
 To install packages via pip simply use:
 
