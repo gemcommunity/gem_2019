@@ -37,12 +37,20 @@ Here's what the notebook will cover. In the session at GEM we'll scroll through 
 - NASA CDF
 
 ## Prepping for the session
-Assuming we have a good internet conenction, you don't need to do any prep. *_BUT_*, we all know how conference wifi works out. So *if you want to grab the data in advance, just skip down to the "Getting files" section* and make sure you have all the data files. Nothing there is big, so it should all be fairly quick to retrieve.
+You should already have Python installed, preferably Python 3, and the following packages:
+- `numpy`
+- `scipy`
+- `matplotlib`
+- `spacepy`
+
+You should also have installed the NASA CDF library (https://cdf.gsfc.nasa.gov/html/sw_and_docs.html). If you've got all of this installed, you should have everything else you need there too.
+
+Assuming we have a good internet connection, you don't need to do any prep. *_BUT_*, we all know how conference wifi works out. So *if you want to grab the data in advance, just skip down to the "Getting files" section* and make sure you have all the data files. Nothing there is big, so it should all be fairly quick to retrieve.
 
 <!-- #region -->
 ## Data, metadata, and data models
 
-We're all familiar with the concpet of data. Whatever our data source, we are almost certainly using numbers to represent a measurement (or simulated measurement). There are a few extra concpets that are helpful to be aware of for talking about data files, some (most? all?) of which will already be familiar to you.
+We're all familiar with the concept of data. Whatever our data source, we are almost certainly using numbers to represent a measurement (or simulated measurement). There are a few extra concepts that are helpful to be aware of for talking about data files, some (most? all?) of which will already be familiar to you.
 
 ### Metadata
 
@@ -107,11 +115,13 @@ import os
 import glob
 from ftplib import FTP
 import urllib.request
+import datetime as dt
 #scientific stack
 import numpy as np
 import scipy.io as scio
 from matplotlib import pyplot as plt
 #everything else
+import h5py
 import spacepy.toolbox as tb
 from spacepy import pycdf
 import spacepy.datamodel as dm
@@ -131,7 +141,7 @@ mydatapath = 'data'
 If you have grabbed these data files in advance, great! If not, let's get them now...
 This is partly because we need files to demonstrate how to work with files, and partly as a basic reference for how to fetch files from the internet. It's fairly straightforward to start doing this programmatically in a workflow.
 
-First, we'll grab a NASA CDF file with THEMIS data from the NASA Space Physics Data Facility. There are sveral ways to do this, but we'll use a basic, generic FTP transfer. Since we already know eaxctly what the file is, and where it is, this method works just fine.
+First, we'll grab a NASA CDF file with THEMIS data from the NASA Space Physics Data Facility. There are several ways to do this, but we'll use a basic, generic FTP transfer. Since we already know exactly what the file is, and where it is, this method works just fine.
 
 ```python
 #set the input/output file name
@@ -145,27 +155,9 @@ if not os.path.isfile(localfname):
     #change directory to the location of the file we want
     ftp.cwd('pub/data/themis/thd/l2/gmom/2012')
     #now retrieve it and log out
-    with open(fname, 'wb') as fh:
+    with open(localfname, 'wb') as fh:
         ftp.retrbinary('RETR {0}'.format(fname), fh.write, 1024)
     ftp.quit()
-```
-
-Now let's grab an IDL save set. I've made a simple file that contains two variables for the pruposes of demonstrating this. Unless you downloaded or cloned the whole repository, then we'll have to grab it from the web. For this we'll need to use Python's basic web handling.
-
-```python
-guvifn = os.path.join(mydatapath, 'guvi_aurora_2003_197')
-guvi_url = 'http://guvitimed.jhuapl.edu/data/level3/guvi_aurora/data/IDLsave/2003/guvi_aurora_2003_197.sav'
-
-req = urllib.request.Request(guvi_url)
-#depending on where you are, web access might go through a proxy server
-#in that case you'd want to explicitly set your proxy by uncommenting the next two lines
-#proxy = 'proxy.example.edu:1405'
-#req.set_proxy(proxy, 'http')
-if not os.path.isfile(guvifn):
-    # Download the file from `url` and save it locally under `file_name`:
-    with urllib.request.urlopen(req) as response, open(guvifn, 'wb') as outfile:
-        gdata = response.read()
-        outfile.write(gdata)
 ```
 
 The next file is a NetCDF3 file with data from the AMPERE constellation. Since the AMPERE site requires downloaders to have an account, this file is in the GEM\_2019 github repository.
@@ -176,7 +168,10 @@ ampfn = os.path.join(mydatapath, ampfile)
 amp_url = 'https://github.com/gemcommunity/gem_2019/blob/master/data/{0}'.format(ampfile)
 
 req = urllib.request.Request(amp_url)
-#do proxy stuff if required
+#depending on where you are, web access might go through a proxy server
+#in that case you'd want to explicitly set your proxy by uncommenting the next two lines
+#proxy = 'proxy.example.edu:1405'
+#req.set_proxy(proxy, 'http')
 if not os.path.isfile(ampfn):
     #retrieve from github
     with urllib.request.urlopen(req) as response, open(guvifn, 'wb') as outfile:
@@ -207,9 +202,9 @@ First, we'll do this a native-Python way, and put our results into a structure t
 ### Method 1: Plain "hand-rolled" Python
 
 ```python
-with open('data/goes-particle-flux-primary.txt') as fh:
+with open(os.path.join(mydatapath, 'goes-particle-flux-primary.txt')) as fh:
     # this will read EVERYTHING from the file
-    #each row willbe a string
+    # each row will be a string
     tempdata = fh.readlines()
 tempdata = [line.strip() for line in tempdata]
 #strip() #removes line breaks, trailing blanks, etc.
@@ -239,13 +234,13 @@ tb.dictree(goesdata, verbose=True)
 
 ```python
 #We'll use numpy's loadtxt function to read the data and ignore the header.
-goesdata_np = np.loadtxt('data/goes-particle-flux-primary.txt', comments=['#',':'])
+goesdata_np = np.loadtxt(os.path.join(mydatapath, 'goes-particle-flux-primary.txt'), comments=['#',':'])
 
 #now inspect the shape of the data, so we know what array dimensions we are working with
-print('The GOES data has dimensions {0}'.format(goesdata.shape))
+print('The GOES data has dimensions {0}'.format(goesdata_np.shape))
 
 #and we'll inspect the first line, which should be 15 elements long
-print('Values in first row:\n {0}'.format(goesdata[0]))
+print('Values in first row:\n {0}'.format(goesdata_np[0]))
 ```
 
 So we can either access the array directly whenever we want to use it, or copy the code from above to put it into a dictionary. Or, ...
@@ -289,6 +284,8 @@ IDL has a long history in space physics, and the convenience of dumping the vari
 Thankfully, you don't need IDL to use an IDL save set any more! `scipy` is a core part of the scientific Python ecosystem, and it has had support for reading IDL save sets for a fairly long time.
 
 _NOTE_: Some IDL data types aren't supported, in my experience. Null pointers, for example. That means that occasionally you'll find an IDL saveset you just can't read with `scipy`. Unfortunately the way around that is to get access to a licensed copy, read the saveset in, then write it back out as a different file type.
+
+To demonstrate, I've included a sample file in the git repository that just has two variables.
 
 ```python
 idldata = scio.readsav('data/test_idlsav.sav')
@@ -345,16 +342,83 @@ And now all the metadata comes along for the ride, so we can inspect it by just 
 print(ampdata_easy['nlon'].attrs)
 ```
 
+## A brief aside... convenient writing using SpacePy's datamodel
+
+You may have noticed we didn't grab any HDF5 data files. At this point, if you have one handy, feel free to use it.
+An alternative is to go download one now.
+
+But, what I'm going to do here is transform our IDL saveset into an HDF5 file.
+
+Remember, we called that `idldata` and it got read in as a Python dictionary. SpacePy's `datamodel` encourages us to use metadata, so let's add some. We store metadata in a dictionary attached to the array, as seen in the NetCDF3 example.
+
+```python
+# First we'll make a dictionary subclass that has metadata
+# we'll also add global metadata
+writemetoH5 = dm.SpaceData(attrs={'creation_date': dt.datetime.now().isoformat()})
+
+# Now convert the arrays to our array subclass that carries metadata
+# and add them to our conatiner. We'll add one item of metadata to illustrate
+writemetoH5['seconds_of_day'] = dm.dmarray(idldata['seconds_of_day'], attrs={'timezone': 'UTC'})
+writemetoH5['flux'] = dm.dmarray(idldata['flux'], attrs={'units': 'cm^-2 s^-1 sr^-1'})
+
+#use the tree method to view the object, lets make the output really verbose
+writemetoH5.tree(verbose=True, attrs=True)
+
+#and then let's write it to HDF5
+writemetoH5.toHDF5(os.path.join(mydatapath, 'testHDF.h5'))
+```
+
+In case you need to work with multiple file types or convert between formats, SpacePy reads from and writes to a range of formats with the one-line convenience methods.
+
+<img src="images/conversions.png"  width="480">
+
+
 ## HDF5, NetCDF4, and Matlab save files
 
-HDF5 is the current generation of the Heirarchical Data Format. It's been around since about 2002, and it's broadly used across the sciences. HDF5 has great parallel support and is widely adopted across high-performance comupting.
+HDF5 is the current generation of the Hierarchical Data Format. It's been around since about 2002, and it's broadly used across the sciences. HDF5 has great parallel support and is widely adopted across high-performance comupting.
 
 So why are NetCDF4 and Matlab save files listed here? Well, NetCDF4 is built on top of HDF5. Since version 7 of Matlab, the default save format (the `.mat` saveset) has used HDF5 under the hood. So, unless the files are using either specific features not supported by Python interfaces to the HDF5 library, then reading NetCDF4 and `.mat` files is as easy as reading HDF5.
 
 The two major libraries that provide HDF5 support are `h5py` and `pytables`. `spacepy` provides convenience routines to read/write in one line through its `datamodel` module. As before, files that won't fit in memory shouldn't try to use the convenience routines.
 
-```python
+So, let's just load the HDF5 file we made back in (or you can just use one of your own).
 
+```python
+h5data = dm.fromHDF5(os.path.join(mydatapath, 'testHDF.h5'))
+h5data.tree(attrs=True)
+print()
+print(h5data['flux'])
+```
+
+```python
+# Open the file
+h5data = h5py.File(os.path.join(mydatapath, 'testHDF.h5'))
+
+# And let's start inspecting the file
+print('Base group is called: {0}'.format(h5data.name))
+print('Groups and datasets in "/":')
+for item in h5data[h5data.name].items():
+    print('{0}: {1}'.format(item[0], item[1]))
+```
+
+```python
+# and let's print out the flux variable
+# because none of the data has been retrieved we need to specify indices to retrieve it
+print(h5data['flux'][...])
+```
+
+And let's inspect the metadata on `flux`. Then we should close the file.
+
+```python
+print(list(h5data['flux'].attrs.items()))
+```
+
+Even though the syntax is different from the other interfaces we've worked with, it's still (at heart) a dictionary with attributes storing arrays with attributes, a simple way of inspecting the file object is with `spacepy.toolbox.dictree`. This is a general-purpose version of the `tree` method on the `SpaceData` class. Once we've done that we'll close the HDF5 file.
+
+```python
+tb.dictree(h5data, attrs=True)
+
+h5data.close()
 ```
 
 ## NASA CDF
@@ -365,22 +429,119 @@ The Python tools that do are (in order of appearance):
 1. spacepy
   - Originally released in 2009, this library has had full CDF support (read, write, etc.) since around 2010. It provides a robust interface to the NASA CDF library.
     - Benefit: When the CDF library updates, as it does regularly, you just install the new one and SpacePy will use it. No waiting for the developers!
-    - Benefit: Provides full, robust, well-tested CDF library access. Read and write, supports backwards-compatible versions.
+    - Benefit: Provides full, robust, well-tested CDF library access. Read and write, supports everything NASA's CDF library does.
     - Drawback: You have to install a C library (but NASA's instructions are pretty good).
 2. pysatCDF
   - pysatCDF was designed to provide a lightweight, easy-to-install, CDF reader. It was primarily aimed at users of pysat (largely the CEDAR community). The "easy-to-install" part comes from the fact that the CDF library is bundled with it.
     - Benefit: CDF is included, and `pysatCDF` will try to build it for you.
-    - Benefit: Syntax for use is modeled on `spacepy`, so the two are fairly interoperable.
+    - Benefit: Syntax for use is modeled on `spacepy.pycdf`, so the two are fairly interoperable.
     - Drawback: If you need a new version of CDF you have to wait for `pysatCDF` to be updated, then reinstall that.
     - Drawback: Only has read capability, no write capability.
 3. cdflib
-  - Originally (I believe) written for MAVEN, this is a pure Python version of the CDF library. It's only been around for a couple of years.
+  - Originally written for MAVEN, this is a pure Python version of the CDF library. It's only been around for a couple of years.
     - Benefit: It's just Python. No need to worry about compiling C code, or having someone else compile it. It's just Python.
-    - Drawback: Any changes to how CDF works under-the-hood will nned to be implemented in `cdflib` after CDF updates the C library.
+    - Drawback: Any changes to how CDF works under-the-hood will need to be implemented in `cdflib` after CDF updates the C library.
     - Drawback: Can only write v3 CDFs
 
-For the sake of interoperability I'll focus on using SpacePy. Reading using `pysatCDF` should work just about the same way as using the `spacepy.pycdf` module. `cdflib` has different syntax.
+For the sake of interoperability I'll focus on using SpacePy. Reading using `pysatCDF` should work just about the same way as using the `spacepy.pycdf` module, but I believe it uses a read-all-at-once approach (like the convenience routines in SpacePy's `datamodel`), so watch out if your file contents approach. `cdflib` has different syntax.
 
 ```python
+# open the data file, like h5py this interface doesn't read the file all-at-once
+themisdata = pycdf.CDF(localfname)
 
+#We can list the keys of the dictionary-like object, just like on a dictionary
+# This file has A LOT of variables, so let's just show the ones with "flux" in the name.
+print([key for key in themisdata.keys() if 'flux' in key])
 ```
+
+The `dictree` function will display everything in the file, but since there's so much we'll skip it here so as to not clutter the notebook.
+
+`pycdf` aims to work as much like standard Python objects as possible, so that it's intuitive to use if you already know just a little Python. So let's assume that our variables work like numpy arrays and we'll try to inspect the shape and retrieve/print some data. Also, because this is a NASA CDF file from a NASA Heliophysics mission, it should be using the ISTP metadata standard.
+
+```python
+print('thd_ptebb_flux. Shape = {0}'.format(themisdata['thd_ptebb_flux'].shape))
+print(themisdata['thd_ptebb_flux'].attrs['CATDESC'])
+print(themisdata['thd_ptebb_flux'].attrs['UNITS'])
+print('Depends on: {0}'.format(themisdata['thd_ptebb_flux'].attrs['DEPEND_0']))
+
+print('\nthd_ptibb_flux. Shape = {0}'.format(themisdata['thd_ptibb_flux'].shape))
+print(themisdata['thd_ptibb_flux'].attrs['CATDESC'])
+print(themisdata['thd_ptibb_flux'].attrs['UNITS'])
+print('Depends on: {0}'.format(themisdata['thd_ptibb_flux'].attrs['DEPEND_0']))
+```
+
+And let's retrieve some data... since it looks like the "ion particle flux vector" variable is empty, we'll use the "electron particle flux vector".
+
+```python
+print(themisdata['thd_ptebb_flux'][:4])
+```
+
+While that isn't too painful, we can do a one-line load-at-once using `spacepy.datamodel`. We should close the CDF file first... (Note that `pycdf` supports "contexts"; that is, we can use the `with` construction that we used above that opens the file and closes automatically at either the end of the context or if anything goes wrong.)
+
+```python
+themisdata.close()
+
+themisdata_easy = dm.fromCDF(localfname)
+```
+
+And now we can just copy and paste the code from above inspecting the object and retrieving the first 4 rows of the variable.
+
+```python
+print('thd_ptebb_flux. Shape = {0}'.format(themisdata_easy['thd_ptebb_flux'].shape))
+print(themisdata_easy['thd_ptebb_flux'].attrs['CATDESC'])
+print(themisdata_easy['thd_ptebb_flux'].attrs['UNITS'])
+print('Depends on: {0}'.format(themisdata_easy['thd_ptebb_flux'].attrs['DEPEND_0']))
+
+print(themisdata_easy['thd_ptebb_flux'][:4])
+```
+
+## And quickly back to ASCII
+
+We explored a simple ASCII file with a few basic methods. It's worth pointing out that there are plenty more ways to work with well-organized ASCII data, including the popular `pandas` library. However, I want to finish up by noting that working with metadata has been much easier in the self-describing file formats than with most ASCII files. That's because generally you need to write a custom reader to handle however the data product has chosen to include metadata (if they include any).
+
+There is a good way to make ASCII carry metadata, and essentially form a text-based self-describing format. This is the _JSON-headed ASCII_ format, which has been used for Van Allen Probes magnetic ephemeris data (available in both HDF5 and JSON-headed ASCII), as well as the LANL-GPS energetic charged particle data, and more.
+
+SpacePy supports this data format, as does the `Autoplot` software (http://autoplot.org/) where it's called "rich ASCII".
+This format provides a machine-readable, yet human-friendly, header that describes the metadata as well as which variable it belongs to and where in the file that variable is.
+
+Let's use the HDF5 file we made, since we already added basic metadata and it's short and easy enough to inspect visually in this notebook.
+
+```python
+writemetoH5.tree(attrs=True) #to remind ourselves of what we had...
+```
+
+```python
+# we want to put the time in the first column, so let's specify that with the order keyword.
+# You don't need a complete list of the variables.
+writemetoH5.toJSONheadedASCII(os.path.join(mydatapath, 'testJHA.txt'), order=['seconds_of_day'])
+```
+
+<!-- #region -->
+What does that look like?
+
+You can fire up a text editor, but it should look like this:
+```
+#{
+#    "creation_date": "2019-06-23T00:02:57.027608",
+#    "flux": {
+#        "DIMENSION": [1],
+#        "START_COLUMN": 1,
+#        "units": "cm^-2 s^-1 sr^-1"
+#    },
+#    "seconds_of_day": {
+#        "DIMENSION": [1],
+#        "START_COLUMN": 0,
+#        "timezone": "UTC"
+#    }
+#}
+1 45
+2 50
+3 35
+4 20
+5 55
+```
+
+The header is all behind a comment symbol ('#'), and it uses JSON (Javascript Object Notation) which is commonly used by web services. This is well-supported by most programming languages and we use it to describe the layout of the file, as well as the metadata. This way, it doesn't really matter which column each variable is in... the reader will just know as it can read the metadata.
+
+Of course, the data below the header is just whitespace-delimited ASCII, so it's trivial to read this like any other text file.
+<!-- #endregion -->
