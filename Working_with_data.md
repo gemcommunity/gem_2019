@@ -13,6 +13,7 @@ jupyter:
     name: python3
 ---
 
+<!-- #region -->
 # Working with data files in Python
 
 In this notebook we'll cover the basics of working with data files in Python, from a space physics user perspective.
@@ -46,6 +47,12 @@ You should already have Python installed, preferably Python 3, and the following
 You should also have installed the NASA CDF library (https://cdf.gsfc.nasa.gov/html/sw_and_docs.html). If you've got all of this installed, you should have everything else you need there too.
 
 Assuming we have a good internet connection, you don't need to do any prep. *_BUT_*, we all know how conference wifi works out. So *if you want to grab the data in advance, just skip down to the "Getting files" section* and make sure you have all the data files. Nothing there is big, so it should all be fairly quick to retrieve.
+
+And if you haven't installed `spacepy`, go ahead and grab that. If you have, update, there was a new release a few days ago!
+```
+pip install -U spacepy
+```
+<!-- #endregion -->
 
 <!-- #region -->
 ## Data, metadata, and data models
@@ -125,7 +132,6 @@ import h5py
 import spacepy.toolbox as tb
 from spacepy import pycdf
 import spacepy.datamodel as dm
-import spacepy.plot as splot
 
 #juypter/ipython magic command for inline plotting
 %matplotlib inline
@@ -276,6 +282,41 @@ This is basically the same as the _hand-rolled_ version above, but now the dicti
 print('Glabal metadata (should be empty here): {0}'.format(goesdata.attrs))
 print('Metadata on "day" (should be empty here): {0}'.format(goesdata['day'].attrs))
 ```
+
+## Visualizing the contents of a data file
+
+A lot of the time we want to see what's in the data file we opened. Let's try that here,briefly, to show that:
+1. It's easy
+2. It's trivial to change between pre-defined styles
+
+Making presentation, or publication, quality plots should be easy.
+
+```python
+def make_plot():
+    fig = plt.figure(figsize=(8,4))
+    plt.plot(goesdata['seconds_of_day'], goesdata['flux_e2'])
+    plt.xlabel('seconds of day')
+    plt.ylabel('integral flux [cm$^{-2}$ s$^{-1}$ sr$^{-1}$]')
+
+#with the default matplotlib style
+make_plot()
+```
+
+```python
+#with the default spacepy plot style
+import spacepy.plot as splot
+splot.style('spacepy')
+make_plot()
+```
+
+```python
+#revert the spacepy plot style and try one of the matplotlib style sheets
+splot.revert_style()
+with plt.style.context('fivethirtyeight') as usestyle:
+    make_plot()
+```
+
+And now that we've made some pretty plots, back to the data wrangling!
 
 ## Legacy IDL save sets
 
